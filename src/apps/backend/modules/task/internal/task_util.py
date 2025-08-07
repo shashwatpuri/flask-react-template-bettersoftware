@@ -13,4 +13,8 @@ class TaskUtil:
             description=validated_task_data.description,
             id=str(validated_task_data.id),
             title=validated_task_data.title,
+            isFinished=validated_task_data.isFinished,
+            created_at=validated_task_data.created_at,
+            updated_at=validated_task_data.updated_at,
+            comments=validated_task_data.comments,
         )

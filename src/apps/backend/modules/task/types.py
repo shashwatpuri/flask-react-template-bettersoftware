@@ -1,8 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional, Dict, Any
 
 from modules.application.common.types import PaginationParams, PaginationResult, SortParams
+
+
+@dataclass(frozen=True)
+class Comment:
+    id: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass(frozen=True)
@@ -11,6 +19,10 @@ class Task:
     account_id: str
     description: str
     title: str
+    isFinished: bool = False
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    comments: List[Comment] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -31,7 +43,7 @@ class CreateTaskParams:
     account_id: str
     description: str
     title: str
-
+    isFinished: bool = False
 
 @dataclass(frozen=True)
 class UpdateTaskParams:
@@ -39,7 +51,7 @@ class UpdateTaskParams:
     task_id: str
     description: str
     title: str
-
+    isFinished: Optional[bool] = None
 
 @dataclass(frozen=True)
 class DeleteTaskParams:
@@ -53,8 +65,37 @@ class TaskDeletionResult:
     deleted_at: datetime
     success: bool
 
+@dataclass(frozen=True)
+class AddCommentParams:
+    account_id: str
+    task_id: str
+    content: str
+
+
+@dataclass(frozen=True)
+class UpdateCommentParams:
+    account_id: str
+    task_id: str
+    comment_id: str
+    content: str
+
+@dataclass(frozen=True)
+class DeleteCommentParams:
+    account_id: str
+    task_id: str
+    comment_id: str
+
+@dataclass(frozen=True)
+class CommentResult:
+    id: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
 
 @dataclass(frozen=True)
 class TaskErrorCode:
     NOT_FOUND: str = "TASK_ERR_01"
     BAD_REQUEST: str = "TASK_ERR_02"
+    COMMENT_NOT_FOUND: str = "TASK_ERR_03"
+    UNAUTHORIZED: str = "TASK_ERR_04"

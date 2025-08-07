@@ -12,3 +12,7 @@ class TaskNotFoundError(AppError):
 class TaskBadRequestError(AppError):
     def __init__(self, message: str) -> None:
         super().__init__(code=TaskErrorCode.BAD_REQUEST, http_status_code=400, message=message)
+
+class TaskUnauthorizedError(AppError):
+    def __init__(self, message: str = "You are not authorized to perform this action") -> None:
+        super().__init__(code=TaskErrorCode.UNAUTHORIZED, http_status_code=403, message=message)

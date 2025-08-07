@@ -9,6 +9,10 @@ from modules.task.types import (
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
+    AddCommentParams,
+    UpdateCommentParams,
+    DeleteCommentParams,
+    CommentResult
 )
 
 
@@ -32,3 +36,15 @@ class TaskService:
     @staticmethod
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
         return TaskWriter.delete_task(params=params)
+
+    @staticmethod
+    def add_comment(*, params: AddCommentParams) -> CommentResult:
+        return TaskWriter.add_comment(params=params)
+
+    @staticmethod
+    def update_comment(*, params: UpdateCommentParams) -> CommentResult:
+        return TaskWriter.update_comment(params=params)
+
+    @staticmethod
+    def delete_comment(*, params: DeleteCommentParams) -> None:
+        return TaskWriter.delete_comment(params=params)
