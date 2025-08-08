@@ -7,6 +7,7 @@ import { Logger } from './utils/logger';
 
 import { AccountProvider } from 'frontend/contexts';
 import { AuthProvider } from 'frontend/contexts/auth.provider';
+import { TaskProvider } from 'frontend/contexts/task.provider';
 import { Config } from 'frontend/helpers';
 import { AppRoutes } from 'frontend/routes';
 import InspectLet from 'frontend/vendor/inspectlet';
@@ -26,8 +27,10 @@ export default function App(): React.ReactElement {
     <ErrorBoundary fallback={ErrorFallback}>
       <AuthProvider>
         <AccountProvider>
-          <Toaster />
-          <AppRoutes />
+          <TaskProvider>
+            <Toaster />
+            <AppRoutes />
+          </TaskProvider>
         </AccountProvider>
       </AuthProvider>
     </ErrorBoundary>

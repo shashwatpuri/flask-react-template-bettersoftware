@@ -14,9 +14,9 @@ class TaskModel(BaseModel):
     title: str
     active: bool = True
     isFinished: bool = False
-    created_at: Optional[datetime] = datetime.now()
+    created_at: Optional[datetime] = datetime.utcnow()
     id: Optional[ObjectId | str] = None
-    updated_at: Optional[datetime] = datetime.now()
+    updated_at: Optional[datetime] = datetime.utcnow()
     comments: List[Comment] = field(default_factory=list)
 
     @classmethod

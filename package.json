@@ -49,6 +49,7 @@
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.539.0",
     "mini-css-extract-plugin": "^2.8.1",
     "path": "^0.12.7",
     "postcss": "^8.4.35",
