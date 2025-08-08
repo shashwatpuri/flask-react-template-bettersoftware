@@ -45,7 +45,7 @@ class TaskWriter:
             {"$set": {
                 "description": params.description, 
                 "title": params.title, 
-                "updated_at": datetime.now(),
+                "updated_at": datetime.utcnow(),
                 "isFinished": params.isFinished
                 }
             },
@@ -61,7 +61,7 @@ class TaskWriter:
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
         task = TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
-        deletion_time = datetime.now()
+        deletion_time = datetime.utcnow()
         updated_task_bson = TaskRepository.collection().find_one_and_update(
             {"_id": ObjectId(task.id)},
             {"$set": {"active": False, "updated_at": deletion_time}},
@@ -89,14 +89,14 @@ class TaskWriter:
         comment = {
             "id": str(ObjectId()),
             "content": params.content,
-            "created_at": datetime.now(),
-            "updated_at": datetime.now()
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
         }
         
         result = TaskRepository.collection().update_one(
             {"_id": ObjectId(params.task_id)},
             {"$push": {"comments": comment},
-             "$set": {"updated_at": datetime.now()}}
+             "$set": {"updated_at": datetime.utcnow()}}
         )
         
         if result.matched_count == 0:
@@ -133,8 +133,8 @@ class TaskWriter:
             {
                 "$set": {
                     "comments.$.content": params.content,
-                    "comments.$.updated_at": datetime.now(),
-                    "updated_at": datetime.now()
+                    "comments.$.updated_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
                 }
             }
         )
@@ -189,7 +189,7 @@ class TaskWriter:
             {"_id": ObjectId(params.task_id)},
             {
                 "$pull": {"comments": {"id": params.comment_id}},
-                "$set": {"updated_at": datetime.now()}
+                "$set": {"updated_at": datetime.utcnow()}
             }
         )
         
