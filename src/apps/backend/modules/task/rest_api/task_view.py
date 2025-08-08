@@ -33,7 +33,7 @@ class TaskView(MethodView):
         if not request_data.get("description"):
             raise TaskBadRequestError("Description is required")
 
-        if not request_data.get("isFinished"):
+        if request_data.get("isFinished") is None:
             raise TaskBadRequestError("task status is required")
 
         create_task_params = CreateTaskParams(

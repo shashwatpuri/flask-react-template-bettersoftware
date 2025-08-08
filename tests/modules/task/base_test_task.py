@@ -40,6 +40,14 @@ class BaseTestTask(unittest.TestCase):
     def get_task_by_id_api_url(self, account_id: str, task_id: str) -> str:
         return f"http://127.0.0.1:8080/api/accounts/{account_id}/tasks/{task_id}"
 
+    # COMMENT URL HELPER METHODS
+
+    def get_comments_api_url(self, account_id: str, task_id: str) -> str:
+        return f"http://127.0.0.1:8080/api/accounts/{account_id}/tasks/{task_id}/comments"
+
+    def get_comment_by_id_api_url(self, account_id: str, task_id: str, comment_id: str) -> str:
+        return f"http://127.0.0.1:8080/api/accounts/{account_id}/tasks/{task_id}/comments/{comment_id}"
+
     # ACCOUNT AND TOKEN HELPER METHODS
 
     def create_test_account(
@@ -91,6 +99,13 @@ class BaseTestTask(unittest.TestCase):
             tasks.append(task)
         return tasks
 
+    # COMMENT HELPER METHODS
+
+    def create_test_comment(self, account_id: str, task_id: str, content: str, token: str) -> dict:
+        comment_data = {"content": content}
+        response = self.make_authenticated_comment_request("POST", account_id, task_id, token, data=comment_data)
+        return response.json
+
     # HTTP REQUEST HELPER METHODS
 
     def make_authenticated_request(
@@ -139,6 +154,66 @@ class BaseTestTask(unittest.TestCase):
             url = self.get_task_by_id_api_url(target_account_id, task_id)
         else:
             url = self.get_task_api_url(target_account_id)
+
+        headers = {**self.HEADERS, "Authorization": f"Bearer {auth_token}"}
+
+        with app.test_client() as client:
+            if method.upper() == "GET":
+                return client.get(url, headers={"Authorization": f"Bearer {auth_token}"})
+            elif method.upper() == "POST":
+                return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "PATCH":
+                return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "DELETE":
+                return client.delete(url, headers={"Authorization": f"Bearer {auth_token}"})
+
+    # COMMENT HTTP REQUEST HELPER METHODS
+
+    def make_authenticated_comment_request(
+        self, method: str, account_id: str, task_id: str, token: str, comment_id: str = None, data: dict = None
+    ):
+        if comment_id:
+            url = self.get_comment_by_id_api_url(account_id, task_id, comment_id)
+        else:
+            url = self.get_comments_api_url(account_id, task_id)
+
+        headers = {**self.HEADERS, "Authorization": f"Bearer {token}"}
+
+        with app.test_client() as client:
+            if method.upper() == "GET":
+                return client.get(url, headers={"Authorization": f"Bearer {token}"})
+            elif method.upper() == "POST":
+                return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "PATCH":
+                return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "DELETE":
+                return client.delete(url, headers={"Authorization": f"Bearer {token}"})
+
+    def make_unauthenticated_comment_request(
+        self, method: str, account_id: str, task_id: str, comment_id: str = None, data: dict = None
+    ):
+        if comment_id:
+            url = self.get_comment_by_id_api_url(account_id, task_id, comment_id)
+        else:
+            url = self.get_comments_api_url(account_id, task_id)
+
+        with app.test_client() as client:
+            if method.upper() == "GET":
+                return client.get(url)
+            elif method.upper() == "POST":
+                return client.post(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "PATCH":
+                return client.patch(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "DELETE":
+                return client.delete(url)
+
+    def make_cross_account_comment_request(
+        self, method: str, target_account_id: str, task_id: str, auth_token: str, comment_id: str = None, data: dict = None
+    ):
+        if comment_id:
+            url = self.get_comment_by_id_api_url(target_account_id, task_id, comment_id)
+        else:
+            url = self.get_comments_api_url(target_account_id, task_id)
 
         headers = {**self.HEADERS, "Authorization": f"Bearer {auth_token}"}
 
