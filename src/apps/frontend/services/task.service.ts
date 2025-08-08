@@ -1,4 +1,4 @@
-import APIService from './api.service';
+  import APIService from './api.service';
 
 import { AxiosResponse } from 'axios';
 
@@ -38,11 +38,13 @@ class TaskService extends APIService {
     this.apiUrl += '/tasks';
   }
 
-  async getTasks(accountId: string): Promise<Task[]> {
-    const response: AxiosResponse<{ items: Task[] }> = await this.apiClient.get(
-      `/accounts/${accountId}/tasks`,
-    );
-    return response.data.items;
+  async getTasks(accountId: string, page: number = 1, size: number = 10): Promise<{ items: Task[]; total: number; page: number; total_pages: number }> {
+    const response: AxiosResponse<{ items: Task[]; total: number; page: number; total_pages: number }> = 
+      await this.apiClient.get(
+        `/accounts/${accountId}/tasks`,
+        { params: { page, size } }
+      );
+    return response.data;
   }
 
   async getTask(accountId: string, taskId: string): Promise<Task> {

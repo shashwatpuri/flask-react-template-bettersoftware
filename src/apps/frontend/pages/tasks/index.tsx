@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import H2 from 'frontend/components/typography/h2';
 import Spinner from 'frontend/components/spinner/spinner';
 import toast from 'react-hot-toast';
-import { getAccessTokenFromStorage } from 'frontend/utils/storage-util';
-import { useTaskContext } from 'frontend/contexts/task.provider';
 import TaskForm from 'frontend/components/task/task-form';
 import TaskList from 'frontend/components/task/task-list';
 import { TaskFormData } from 'frontend/services/task.service';
+import { useTaskContext } from 'frontend/contexts/task.provider';
+import { getAccessTokenFromStorage } from 'frontend/utils/storage-util';
 
 const TasksPage: React.FC = () => {
   const [accessToken] = useState(() => getAccessTokenFromStorage());
   const {
-    fetchTasks,
+    // Task data
     tasks,
+    filteredTasks,
     isFetchingTasks,
     fetchTasksError,
     createTask,
@@ -24,13 +25,29 @@ const TasksPage: React.FC = () => {
     deleteTask,
     isDeletingTask,
     deleteTaskError,
+
+    // Pagination
+    currentPage,
+    fetchTasks,
+
+    // Filter
+    filter,
+    setFilter,
   } = useTaskContext();
 
+  const loadTasks = useCallback((page: number) => {
+    if (accessToken?.accountId) {
+      return fetchTasks(accessToken.accountId, page, 10);
+    }
+    return Promise.resolve(null);
+  }, [accessToken?.accountId, fetchTasks]);
+
+  // Initial load
   useEffect(() => {
     if (accessToken?.accountId) {
-      fetchTasks(accessToken.accountId);
+      loadTasks(1);
     }
-  }, [accessToken?.accountId, fetchTasks]);
+  }, [accessToken?.accountId, loadTasks]);
 
   useEffect(() => {
     if (fetchTasksError) {
@@ -48,23 +65,18 @@ const TasksPage: React.FC = () => {
   }, [fetchTasksError, createTaskError, updateTaskError, deleteTaskError]);
 
   const handleCreateTask = async (taskData: TaskFormData) => {
-    if (!accessToken?.accountId) {
-      toast.error('Please log in to create tasks');
-      return;
-    }
+    if (!accessToken?.accountId) return;
 
     try {
-      const result = await createTask(
+      await createTask(
         accessToken.accountId,
         taskData.title,
         taskData.description,
-        taskData.isFinished,
+        taskData.isFinished
       );
 
-      if (result) {
-        toast.success('Task created successfully!');
-        await fetchTasks(accessToken.accountId);
-      }
+      await loadTasks(1);
+      toast.success('Task created successfully!');
     } catch (error) {
       console.error('Error creating task:', error);
     }
@@ -88,23 +100,86 @@ const TasksPage: React.FC = () => {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!accessToken?.accountId) {
-      toast.error('Please log in to delete tasks');
-      return;
-    }
+    if (!accessToken?.accountId) return;
 
     try {
       await deleteTask(accessToken.accountId, taskId);
+
+      // go back if empty
+      const shouldGoToPreviousPage = tasks && tasks.length === 1 && currentPage > 1;
+      const targetPage = shouldGoToPreviousPage ? currentPage - 1 : currentPage;
+
+      await loadTasks(targetPage);
       toast.success('Task deleted successfully!');
-      await fetchTasks(accessToken.accountId);
     } catch (error) {
       console.error('Error deleting task:', error);
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1) {
+      loadTasks(newPage);
+    }
+  };
+
+  const PaginationControls = () => (
+    <div style={{ display: 'flex', gap: '10px', margin: '20px 0' }}>
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage <= 1 || isFetchingTasks}
+        className="px-3 py-1 border rounded disabled:opacity-50"
+      >
+        Previous
+      </button>
+      <span className="flex items-center">Page {currentPage}</span>
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={!tasks || tasks.length < 10 || isFetchingTasks}
+        className="px-3 py-1 border rounded disabled:opacity-50"
+      >
+        Next
+      </button>
+    </div>
+  );
+
+  const FilterControls = () => (
+    <div className="flex items-center gap-4 mb-4">
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="taskFilter"
+          checked={filter === 'all'}
+          onChange={() => setFilter('all')}
+          className="text-blue-500"
+        />
+        All Tasks
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="taskFilter"
+          checked={filter === 'finished'}
+          onChange={() => setFilter('finished')}
+          className="text-green-500"
+        />
+        Finished
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="taskFilter"
+          checked={filter === 'unfinished'}
+          onChange={() => setFilter('unfinished')}
+          className="text-yellow-500"
+        />
+        Unfinished
+      </label>
+    </div>
+  );
 
 
-  if (isFetchingTasks) {
+
+  if (isFetchingTasks && !tasks?.length) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
@@ -120,15 +195,21 @@ const TasksPage: React.FC = () => {
         onSubmit={handleCreateTask}
         isSubmitting={isCreatingTask}
       />
+      <div className='flex flex-col items-center'>
+        <PaginationControls />
+        <FilterControls />
+      </div>
 
-      <TaskList
-        tasks={tasks || []}
-        accountId={accessToken?.accountId || ''}
-        onUpdate={handleUpdateTask}
-        onDelete={handleDeleteTask}
-        isUpdating={isUpdatingTask}
-        isDeleting={isDeletingTask}
-      />
+      <div className="mb-6">
+        <TaskList
+          tasks={filteredTasks}
+          accountId={accessToken?.accountId || ''}
+          onUpdate={handleUpdateTask}
+          onDelete={handleDeleteTask}
+          isUpdating={isUpdatingTask}
+          isDeleting={isDeletingTask}
+        />
+      </div>
     </div>
   );
 };

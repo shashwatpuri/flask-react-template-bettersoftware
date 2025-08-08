@@ -6,7 +6,19 @@ import useTasks from 'frontend/pages/tasks/use-tasks.hook';
 import { Task } from 'frontend/services/task.service';
 
 type TaskContextType = {
-  fetchTasks: (accountId: string) => Promise<Nullable<Task[]>>;
+  // Pagination state
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+  
+  // Filter state
+  filter: 'all' | 'finished' | 'unfinished';
+  setFilter: (filter: 'all' | 'finished' | 'unfinished') => void;
+  filteredTasks: Task[];
+  
+  fetchTasks: (accountId: string, page?: number, size?: number) => Promise<Nullable<{ items: Task[]; total: number; page: number; total_pages: number }>>;
   tasks: Nullable<Task[]>;
   isFetchingTasks: boolean;
   fetchTasksError: Nullable<AsyncError>;
@@ -40,6 +52,16 @@ export const useTaskContext = (): TaskContextType =>
 
 export const TaskProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
+    currentPage,
+    pageSize,
+    totalItems,
+    setPage,
+    setPageSize,
+    
+    filter,
+    setFilter,
+    filteredTasks,
+    
     fetchTasks,
     tasks,
     isFetchingTasks,
@@ -58,6 +80,16 @@ export const TaskProvider: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <TaskContext.Provider
       value={{
+        currentPage,
+        pageSize,
+        totalItems,
+        setPage,
+        setPageSize,
+        
+        filter,
+        setFilter,
+        filteredTasks,
+        
         fetchTasks,
         tasks,
         isFetchingTasks,
