@@ -103,10 +103,10 @@ class TaskWriter:
             raise TaskNotFoundError(f"Task not found: {params.task_id}")
             
         return CommentResult(
-            id=comment["id"],
-            content=comment["content"],
-            created_at=comment["created_at"],
-            updated_at=comment["updated_at"]
+            id=str(comment["id"]),
+            content=str(comment["content"]),
+            created_at=comment["created_at"],  # type: ignore
+            updated_at=comment["updated_at"]  # type: ignore
         )
 
     @staticmethod
@@ -152,10 +152,15 @@ class TaskWriter:
         if not updated_task:
             raise TaskNotFoundError("Failed to retrieve updated comment")
             
-        updated_comment = next(
-            (c for c in updated_task.get("comments", []) if c["id"] == params.comment_id),
-            None
-        )
+        comments = updated_task.get("comments", [])
+        updated_comment = None
+        for comment in comments:
+            if comment["id"] == params.comment_id:
+                updated_comment = comment
+                break
+        
+        if not updated_comment:
+            raise TaskNotFoundError("Failed to retrieve updated comment")
             
         return CommentResult(
             id=updated_comment["id"],

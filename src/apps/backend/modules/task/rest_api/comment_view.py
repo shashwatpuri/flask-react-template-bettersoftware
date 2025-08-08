@@ -24,7 +24,7 @@ class CommentView(MethodView):
             if not request_data.get("content"):
                 raise TaskBadRequestError("Comment content is required")
             
-            account_id_from_token = request.account_id
+            account_id_from_token = request.account_id  # type: ignore
             
             if account_id != account_id_from_token:
                 raise TaskUnauthorizedError("You are not authorized to add comment")
