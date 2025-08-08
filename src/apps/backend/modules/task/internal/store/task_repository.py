@@ -16,6 +16,19 @@ TASK_VALIDATION_SCHEMA = {
             "active": {"bsonType": "bool"},
             "created_at": {"bsonType": "date"},
             "updated_at": {"bsonType": "date"},
+            "comments": {
+                "bsonType": "array",
+                "items": {
+                    "bsonType": "object",
+                    "required": ["id", "content", "created_at", "updated_at"],
+                    "properties": {
+                        "id": {"bsonType": "string"},
+                        "content": {"bsonType": "string"},
+                        "created_at": {"bsonType": "date"},
+                        "updated_at": {"bsonType": "date"}
+                    }
+                }
+            }
         },
     }
 }
@@ -28,6 +41,10 @@ class TaskRepository(ApplicationRepository):
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index(
             [("active", 1), ("account_id", 1)], name="active_account_id_index", partialFilterExpression={"active": True}
+        )
+                
+        collection.create_index(
+            [("comments.id", 1)], name="comments_id_index"
         )
 
         add_validation_command = {

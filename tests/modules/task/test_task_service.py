@@ -10,6 +10,9 @@ from modules.task.types import (
     GetTaskParams,
     TaskErrorCode,
     UpdateTaskParams,
+    AddCommentParams,
+    UpdateCommentParams,
+    DeleteCommentParams,
 )
 from tests.modules.task.base_test_task import BaseTestTask
 
@@ -177,3 +180,111 @@ class TestTaskService(BaseTestTask):
         get_params = GetTaskParams(account_id=self.account.id, task_id=account2_task.id)
         with self.assertRaises(TaskNotFoundError):
             TaskService.get_task(params=get_params)
+
+    # Comment service tests (merged from test_comment_service.py)
+
+    def test_add_comment_success(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+
+        result = TaskService.add_comment(
+            params=AddCommentParams(account_id=self.account.id, task_id=task.id, content="hello")
+        )
+
+        assert result.id is not None
+        assert result.content == "hello"
+
+    def test_add_comment_task_not_found(self) -> None:
+        non_existent_task_id = "507f1f77bcf86cd799439011"
+
+        with self.assertRaises(TaskNotFoundError) as context:
+            TaskService.add_comment(
+                params=AddCommentParams(account_id=self.account.id, task_id=non_existent_task_id, content="hello")
+            )
+
+        assert context.exception.code == TaskErrorCode.NOT_FOUND
+
+    def test_update_comment_success(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+        created_comment = TaskService.add_comment(
+            params=AddCommentParams(account_id=self.account.id, task_id=task.id, content="original")
+        )
+
+        updated = TaskService.update_comment(
+            params=UpdateCommentParams(
+                account_id=self.account.id, task_id=task.id, comment_id=created_comment.id, content="updated"
+            )
+        )
+
+        assert updated.id == created_comment.id
+        assert updated.content == "updated"
+
+    def test_update_comment_not_found(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+        fake_comment_id = "507f1f77bcf86cd799439011"
+
+        with self.assertRaises(TaskNotFoundError) as context:
+            TaskService.update_comment(
+                params=UpdateCommentParams(
+                    account_id=self.account.id, task_id=task.id, comment_id=fake_comment_id, content="updated"
+                )
+            )
+
+        assert context.exception.code == TaskErrorCode.NOT_FOUND
+
+    def test_delete_comment_success(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+        created_comment = TaskService.add_comment(
+            params=AddCommentParams(account_id=self.account.id, task_id=task.id, content="to delete")
+        )
+
+        TaskService.delete_comment(
+            params=DeleteCommentParams(
+                account_id=self.account.id, task_id=task.id, comment_id=created_comment.id
+            )
+        )
+
+        with self.assertRaises(TaskNotFoundError):
+            TaskService.update_comment(
+                params=UpdateCommentParams(
+                    account_id=self.account.id, task_id=task.id, comment_id=created_comment.id, content="x"
+                )
+            )
+
+    def test_delete_comment_not_found(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+        fake_comment_id = "507f1f77bcf86cd799439011"
+
+        with self.assertRaises(TaskNotFoundError) as context:
+            TaskService.delete_comment(
+                params=DeleteCommentParams(
+                    account_id=self.account.id, task_id=task.id, comment_id=fake_comment_id
+                )
+            )
+
+        assert context.exception.code == TaskErrorCode.NOT_FOUND
+
+    def test_add_update_delete_comment_persists(self) -> None:
+        task = self.create_test_task(account_id=self.account.id)
+        comment = TaskService.add_comment(
+            params=AddCommentParams(account_id=self.account.id, task_id=task.id, content="first")
+        )
+
+        fetched1 = TaskService.get_task(params=GetTaskParams(account_id=self.account.id, task_id=task.id))
+        assert isinstance(fetched1.comments, list)
+        assert any(c.get("id") == comment.id for c in fetched1.comments)
+
+        TaskService.update_comment(
+            params=UpdateCommentParams(
+                account_id=self.account.id, task_id=task.id, comment_id=comment.id, content="second"
+            )
+        )
+        fetched2 = TaskService.get_task(params=GetTaskParams(account_id=self.account.id, task_id=task.id))
+        updated_dict = next((c for c in fetched2.comments if c.get("id") == comment.id), None)
+        assert updated_dict is not None
+        assert updated_dict.get("content") == "second"
+
+        TaskService.delete_comment(
+            params=DeleteCommentParams(account_id=self.account.id, task_id=task.id, comment_id=comment.id)
+        )
+        fetched3 = TaskService.get_task(params=GetTaskParams(account_id=self.account.id, task_id=task.id))
+        assert all(c.get("id") != comment.id for c in fetched3.comments)

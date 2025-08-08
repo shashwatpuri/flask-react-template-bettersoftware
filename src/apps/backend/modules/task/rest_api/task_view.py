@@ -33,8 +33,14 @@ class TaskView(MethodView):
         if not request_data.get("description"):
             raise TaskBadRequestError("Description is required")
 
+        if request_data.get("isFinished") is None:
+            raise TaskBadRequestError("task status is required")
+
         create_task_params = CreateTaskParams(
-            account_id=account_id, title=request_data["title"], description=request_data["description"]
+            account_id=account_id, 
+            title=request_data["title"], 
+            description=request_data["description"],
+            isFinished=request_data["isFinished"]
         )
 
         created_task = TaskService.create_task(params=create_task_params)
@@ -86,8 +92,15 @@ class TaskView(MethodView):
         if not request_data.get("description"):
             raise TaskBadRequestError("Description is required")
 
+        if request_data.get("isFinished") is None:
+            raise TaskBadRequestError("task status is required")
+
         update_task_params = UpdateTaskParams(
-            account_id=account_id, task_id=task_id, title=request_data["title"], description=request_data["description"]
+            account_id=account_id, 
+            task_id=task_id, 
+            title=request_data["title"], 
+            description=request_data["description"],
+            isFinished=request_data["isFinished"]
         )
 
         updated_task = TaskService.update_task(params=update_task_params)

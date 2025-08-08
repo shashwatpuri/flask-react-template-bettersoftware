@@ -1,6 +1,7 @@
 from flask import Blueprint
 
 from modules.task.rest_api.task_view import TaskView
+from modules.task.rest_api.comment_view import CommentView
 
 
 class TaskRouter:
@@ -13,6 +14,16 @@ class TaskRouter:
             "/accounts/<account_id>/tasks/<task_id>",
             view_func=TaskView.as_view("task_view_by_id"),
             methods=["GET", "PATCH", "DELETE"],
+        )
+        blueprint.add_url_rule(
+            "/accounts/<account_id>/tasks/<task_id>/comments",
+            view_func=CommentView.as_view("comment_view"),
+            methods=["POST"]
+        )
+        blueprint.add_url_rule(
+            "/accounts/<account_id>/tasks/<task_id>/comments/<comment_id>",
+            view_func=CommentView.as_view("comment_view_by_id"),
+            methods=["PATCH", "DELETE"]
         )
 
         return blueprint
